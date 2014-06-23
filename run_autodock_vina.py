@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 
 ##########################################################################
-# author: joemartaganna (joemar.ct@gmail.com)
+# Author: joemartaganna (joemar.ct@gmail.com)
 #
+# Description:
 # Script for running AutoDock Vina directly against gzipped mol2 files
 # to be more memory- and disk space-efficient. Individual mol2 files are
 # extracted from a gzipped file downloaded from the ZINC database. Each
 # file is then converted to pdbqt, then docked against a receptor protein.
 # An affinity cut-off is set so that the intermediate files produced
 # during docking with results below this cut-off are discarded. Only the
-# outfiles files from high affinity conformers are stored.
+# output files from high affinity conformers (very few) are stored. The 
+# ZINC id of the ligands docked are saved into a Redis database. Each
+# docking run checks this database to avoid redocking the same ligands 
+# if the script is rerun because of errors or accidental shutdown.
 #
 # Requires: vina, babel, joblib, redis, redispy, prepare_ligands
 ##########################################################################
@@ -65,6 +69,11 @@ def execute_virtual_screening(vina_conf, gzipped_mol2, output_dir=None, affinity
     print 'There are %s ligands in this file.' % len(mols)
     Parallel(n_jobs=-1, backend='multiprocessing', verbose=55)(delayed(dock_ligand)(vina_conf, mol, output_dir, affinity_cutoff) for mol in mols)
     
+    
+def connect_to_redisdb():
+    db = redis.Redis(host='localhost', port=6379, db=7)
+    return db
+
         
 if __name__ == '__main__':
     import sys
@@ -77,7 +86,7 @@ if __name__ == '__main__':
     # Start the redis db
     redis_conf = os.path.join(output_dir, 'redis.conf')
     if os.path.exists(redis_conf):
-        db = redis.Redis(host='localhost', port=6379, db=7)
+        db = connect_to_redisdb()
         for i, f in enumerate(infiles):
             print '\n\n%s/%s - dealing with %s' % (i+1, len(infiles), f)
             execute_virtual_screening(conf, f, output_dir=output_dir, affinity_cutoff=7.5)
@@ -85,5 +94,5 @@ if __name__ == '__main__':
         rc = open(redis_conf, 'w')
         rc.write('dbfilename records.rdb\ndir %s\nsave 900 1' % output_dir)
         rc.close()
-        print 'Redis configuration file has been created.'
-        print 'Run redis-server using the redis.conf file and rerun this script to start the virtual screening.'
+        print '\nRedis configuration file has been created.'
+        print 'Run redis-server using the redis.conf file and rerun this script to start the virtual screening.\n'
