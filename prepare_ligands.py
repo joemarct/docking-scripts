@@ -4,6 +4,7 @@
 # Author: joemartaganna (joemar.ct@gmail.com)
 #
 # Description:
+#
 # Script for converting mol2 files downloaded from the ZINC database into 
 # pdbqt files with charges and polar hydrogens added in preparation for 
 # docking with AutoDock Vina. The conversion is done in parallel through
