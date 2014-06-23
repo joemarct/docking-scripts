@@ -44,18 +44,20 @@ def dock_ligand(vina_conf, mol2_string, output_dir, affinity_cutoff):
                 affinity = float(best.split()[1]) * -1
             else:
                 affinity = 0
-        # Put this into the record
-        db[mol_id] = affinity
-        # Remove the input and output files if affinity is below cut-off
-        if affinity < affinity_cutoff:
-            os.remove(ligand)
-            os.remove(ligand.replace('.pdbqt', '_out.pdbqt'))
+            # Put this into the record
+            db[mol_id] = affinity
+            # Remove the input and output files if affinity is below cut-off
+            if affinity < affinity_cutoff:
+                os.remove(ligand)
+                os.remove(ligand.replace('.pdbqt', '_out.pdbqt'))
+            else:
+                binders_dir = os.path.join(output_dir, 'binders')
+                if not os.path.exists(binders_dir):
+                    os.mkdir(binders_dir)
+                shutil.move(ligand, binders_dir)
+                shutil.move(ligand.replace('.pdbqt', '_out.pdbqt'), binders_dir)
         else:
-            binders_dir = os.path.join(output_dir, 'binders')
-            if not os.path.exists(binders_dir):
-                os.mkdir(binders_dir)
-            shutil.move(ligand, binders_dir)
-            shutil.move(ligand.replace('.pdbqt', '_out.pdbqt'), binders_dir)
+            print 'Error on %s: The conversion from mol2 to pdbqt may not have succeeded.' % mol_id
         
         
 def execute_virtual_screening(vina_conf, gzipped_mol2, output_dir=None, affinity_cutoff=0):

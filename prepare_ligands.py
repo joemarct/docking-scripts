@@ -18,7 +18,7 @@ import gzip
 import os
 
     
-def convert_to_pdbqt(mol2, output_dir):
+def convert_to_pdbqt(mol2, output_dir, remove_input=True):
     mol_id = mol2.split('\n')[1]
     # Write the mol2
     mol2_outf_path = os.path.join(output_dir, mol_id + '.mol2')
@@ -30,7 +30,8 @@ def convert_to_pdbqt(mol2, output_dir):
     cmd = 'babel -imol2 %s -opdbqt %s --partialcharge gasteiger --AddPolarH' % (mol2_outf_path, pdbqt_outf_path)
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
-    os.remove(mol2_outf_path)
+    if remove_input:
+        os.remove(mol2_outf_path)
     return {'mol2': mol2_outf_path, 'pdbqt': pdbqt_outf_path}
             
 
@@ -44,7 +45,7 @@ def split_gzipped_mol2(gzipped_mol2, output_dir=None):
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
     def format_mol(mol):
-        mol = [p] + [x for x in mol.split('\n') if x]
+        mol = [p] + [x.strip() for x in mol.split('\n') if x]
         mol = '\n'.join(mol)
         return mol
     mols = [format_mol(x) for x in mols if x]
