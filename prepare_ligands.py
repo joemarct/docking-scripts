@@ -20,12 +20,10 @@ import os
     
 def convert_to_pdbqt(mol2, output_dir):
     mol_id = mol2.split('\n')[1]
-    p = '@<TRIPOS>MOLECULE'
     # Write the mol2
-    mol = p + '\n' + mol2
     mol2_outf_path = os.path.join(output_dir, mol_id + '.mol2')
     mol2_outf = open(mol2_outf_path, 'w')
-    mol2_outf.write(mol)
+    mol2_outf.write(mol2)
     mol2_outf.close()
     # Convert to pdbqt
     pdbqt_outf_path = mol2_outf_path.replace('.mol2', '.pdbqt')
@@ -33,9 +31,10 @@ def convert_to_pdbqt(mol2, output_dir):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
     os.remove(mol2_outf_path)
+    return {'mol2': mol2_outf_path, 'pdbqt': pdbqt_outf_path}
             
 
-def generate_pdbqt_files(gzipped_mol2, output_dir=None):
+def split_gzipped_mol2(gzipped_mol2, output_dir=None):
     f = gzip.open(gzipped_mol2, 'rb').read()
     p = '@<TRIPOS>MOLECULE'
     mols_count = f.count(p)
@@ -44,8 +43,17 @@ def generate_pdbqt_files(gzipped_mol2, output_dir=None):
         output_dir = gzipped_mol2.split('.mol2.gz')[0]
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
-    mols = [x for x in mols if x]
-    Parallel(n_jobs=100, backend='threading', verbose=55)(delayed(convert_to_pdbqt)(mol, output_dir) for mol in mols)
+    def format_mol(mol):
+        mol = [p] + [x for x in mol.split('\n') if x]
+        mol = '\n'.join(mol)
+        return mol
+    mols = [format_mol(x) for x in mols if x]
+    return mols
+    
+
+def generate_pdbqt_files(gzipped_mol2, mols):
+    output_dir = gzipped_mol2.split('.mol2.gz')[0]
+    Parallel(n_jobs=50, backend='threading', verbose=55)(delayed(convert_to_pdbqt)(mol, output_dir) for mol in mols)
     
 
 if __name__ == '__main__':
@@ -53,4 +61,5 @@ if __name__ == '__main__':
     infiles = sys.argv[1:]
     for i, f in enumerate(infiles):
         print '\n\n%s/%s - dealing with %s' % (i+1, len(infiles), f)
-        generate_pdbqt_files(f)
+        mols = split_gzipped_mol2(f)
+        generate_pdbqt_files(f, mols)
