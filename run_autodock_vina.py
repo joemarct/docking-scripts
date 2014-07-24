@@ -135,11 +135,11 @@ if __name__ == '__main__':
     conf = sys.argv[1]
     infiles = sys.argv[2:]
     # Set the output directory
-    output_dir = os.path.join(os.getcwd(), 'docking_results')
+    output_dir = os.path.join(os.getcwd(), 'docking_results', 'temp')
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     # Start the redis db
-    redis_conf = os.path.join(output_dir, 'redis.conf')
+    redis_conf = os.path.join(os.getcwd(), 'docking_results')
     # Setup Dropbox integration
     if dropbox_installed:
         access_token, dropbox_folder = setup_dropbox_integration()
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         db = connect_to_redisdb()
         for i, f in enumerate(infiles):
             print '\n\n%s/%s - dealing with %s' % (i+1, len(infiles), f)
-            execute_virtual_screening(conf, f, output_dir=output_dir, affinity_cutoff=7.5)
+            execute_virtual_screening(conf, f, output_dir=output_dir, affinity_cutoff=8.0)
     else:
         rc = open(redis_conf, 'w')
         rc.write('dbfilename records.rdb\ndir %s\nsave 900 1' % output_dir)
