@@ -82,7 +82,10 @@ def dock_ligand(vina_conf, mol2_string, output_dir, affinity_cutoff):
         # Check if this has been docked
         db[mol_id]
     except KeyError:        
-        ligand_paths = convert_to_pdbqt(mol2_string, output_dir)
+        temp_dir = os.path.join(output_dir, 'temp')
+        if not os.path.exists(temp_dir):
+            os.mkdir(temp_dir)
+        ligand_paths = convert_to_pdbqt(mol2_string, temp_dir)
         ligand = ligand_paths['pdbqt']
         cmd = 'vina --config %s --ligand %s' % (vina_conf, ligand)
         p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -135,7 +138,7 @@ if __name__ == '__main__':
     conf = sys.argv[1]
     infiles = sys.argv[2:]
     # Set the output directory
-    output_dir = os.path.join(os.getcwd(), 'docking_results', 'temp')
+    output_dir = os.path.join(os.getcwd(), 'docking_results')
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     # Start the redis db
