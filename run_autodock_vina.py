@@ -139,7 +139,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     # Start the redis db
-    redis_conf = os.path.join(os.getcwd(), 'docking_results')
+    redis_conf = os.path.join(os.getcwd(), 'docking_results', 'redis.conf')
     # Setup Dropbox integration
     if dropbox_installed:
         access_token, dropbox_folder = setup_dropbox_integration()
