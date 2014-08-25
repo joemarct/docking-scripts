@@ -161,3 +161,4 @@ if __name__ == '__main__':
         print '\nRedis configuration file has been created.'
         print 'Run redis-server using the redis.conf file and rerun this script to start the virtual screening.\n'
             
+
